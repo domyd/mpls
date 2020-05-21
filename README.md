@@ -1,5 +1,7 @@
 # mpls
 
+[![Crates.io](https://img.shields.io/crates/v/mpls)](https://crates.io/crates/mpls)
+
 A movie playlist file (MPLS) parser. Written in Rust using the [nom](https://github.com/Geal/nom) parser combinator library.
 
 Dual-licensed under MIT and Apache 2.0.
