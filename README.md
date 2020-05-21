@@ -12,19 +12,14 @@ use std::io::Read;
 use mpls::Mpls;
 
 fn main() -> std::io::Result<()> {
-    // read the MPLS file into memory
-    let bytes = {
-        let mut f = File::open("00800.mpls")?;
-        let mut buffer = Vec::new();
-        f.read_to_end(&mut buffer)?;
-        buffer
-    };
+    // open the playlist file
+    let mut file = File::open("00800.mpls")?;
 
     // parse the play list
-    let mpls = Mpls::parse(&bytes).expect("failed to parse MPLS file.");
+    let mpls = Mpls::from(&file).expect("failed to parse MPLS file.");
 
     // extract the play list's angles
-    let angles = mpls.angles(); 
+    let angles = mpls.angles();
 
     // extract the segments
     for angle in angles {
@@ -40,4 +35,15 @@ fn main() -> std::io::Result<()> {
 }
 ```
 
+## Installation
+
+Add this to your `Cargo.toml`:
+
+```toml
+[dependencies]
+mpls = "0.1.0"
+```
+
 ## Documentation
+
+See the [reference docs](https://docs.rs/mpls/0.1.0) on crates.io.

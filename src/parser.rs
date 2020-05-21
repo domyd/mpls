@@ -11,6 +11,7 @@ use nom::{
     sequence::tuple,
     take, Err, IResult,
 };
+use std::convert::TryInto;
 use types::{
     AngleInfo, AppInfoPlayList, AudioFormat, CharacterCode, Clip, ColorSpace, DynamicRange,
     ExtensionDataEntry, FrameRate, FrameRateFraction, LanguageCode, MarkType, Mpls, PlayItem,
@@ -18,7 +19,6 @@ use types::{
     StreamEntry, StreamEntryRef, StreamNumberTable, StreamRef, StreamType, SubClipRef, SubPath,
     SubPathRef, SubPlayItem, TimeStamp, VideoFormat,
 };
-use std::convert::TryInto;
 
 fn str_len(len: usize, input: &[u8]) -> IResult<&[u8], &str> {
     let value = take(len);
@@ -503,7 +503,7 @@ fn play_list_mark(input: &[u8]) -> IResult<&[u8], Vec<PlayListMark>> {
             ts: time_stamp >>
             // EntryESPID, meaning unknown
             take!(2usize) >>
-            duration: map!(time_stamp, |t| if *t == 0 { None } else { Some(t) }) >>
+            duration: map!(time_stamp, |t| if t.0 == 0 { None } else { Some(t) }) >>
             (PlayListMark {
                 mark_type,
                 play_item,
@@ -592,123 +592,6 @@ pub fn parse_mpls(input: &[u8]) -> IResult<&[u8], Mpls> {
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn complete_tiny() {
-        // tiny mpls, not a main feature (00770), only 214 bytes, single segment
-        let data = include_bytes!("../assets/tiny.mpls");
-        let sl = &data[..];
-
-        let res = super::parse_mpls(sl);
-        assert!(res.is_ok());
-        assert_eq!(res.unwrap().0, []);
-    }
-
-    #[test]
-    fn complete_small() {
-        // simpler mpls, main feature with only a few segments
-        let data = include_bytes!("../assets/simple.mpls");
-        let sl = &data[..];
-
-        let res = super::parse_mpls(sl);
-        assert!(res.is_ok());
-        assert_eq!(res.unwrap().0, []);
-    }
-
-    #[test]
-    fn complete_large() {
-        // more complex mpls, main feature with many many segments
-        let data = include_bytes!("../assets/large.mpls");
-        let sl = &data[..];
-
-        let res = super::parse_mpls(sl);
-        assert!(res.is_ok());
-        assert_eq!(res.unwrap().0, []);
-    }
-
-    #[test]
-    fn complete_multi_angle() {
-        // large mpls with multiple angles
-        let data = include_bytes!("../assets/multi-angle.mpls");
-        let sl = &data[..];
-
-        let res = super::parse_mpls(sl);
-        assert!(res.is_ok());
-        assert_eq!(res.unwrap().0, []);
-    }
-
-    #[test]
-    fn multi_angle_count() {
-        let data = include_bytes!("../assets/multi-angle.mpls");
-        let sl = &data[..];
-
-        let (_, mpls) = super::parse_mpls(sl).unwrap();
-        assert_eq!(mpls.angles().len(), 4);
-    }
-
-    #[test]
-    fn single_angle_count() {
-        let data = include_bytes!("../assets/simple.mpls");
-        let sl = &data[..];
-
-        let (_, mpls) = super::parse_mpls(sl).unwrap();
-        assert_eq!(mpls.angles().len(), 1);
-    }
-
-    #[test]
-    fn single_angle_segments() {
-        let data = include_bytes!("../assets/simple.mpls");
-        let sl = &data[..];
-
-        let (_, mpls) = super::parse_mpls(sl).unwrap();
-        let angle = mpls.angles()[0];
-        let segments: Vec<&str> = angle
-            .segments()
-            .iter()
-            .map(|s| s.file_name.as_ref())
-            .collect();
-
-        assert_eq!(segments, &["00055", "00059", "00061"]);
-    }
-
-    #[test]
-    fn multi_angle_first_segments() {
-        let data = include_bytes!("../assets/multi-angle.mpls");
-        let sl = &data[..];
-
-        let (_, mpls) = super::parse_mpls(sl).unwrap();
-        let angle = mpls.angles()[0];
-        let segments: Vec<&str> = angle
-            .segments()
-            .iter()
-            .map(|s| s.file_name.as_ref())
-            .collect();
-
-        assert_eq!(
-            &segments[..5],
-            &["00081", "00082", "00086", "00087", "00091"]
-        );
-    }
-
-    #[test]
-    fn multi_angle_last_segments() {
-        let data = include_bytes!("../assets/multi-angle.mpls");
-        let sl = &data[..];
-
-        let (_, mpls) = super::parse_mpls(sl).unwrap();
-        let angle = mpls.angles()[3];
-        dbg!(&mpls.play_list.play_items[1]);
-        let segments: Vec<&str> = angle
-            .segments()
-            .iter()
-            .map(|s| s.file_name.as_ref())
-            .collect();
-
-        assert_eq!(
-            &segments[..5],
-            &["00081", "00085", "00086", "00090", "00091"]
-        );
-    }
-
     #[test]
     fn header_tag() {
         let data = [0x4d, 0x50, 0x4c, 0x53, 0x30];

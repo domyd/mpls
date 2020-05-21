@@ -1,3 +1,5 @@
+#![doc(html_root_url = "https://docs.rs/mpls/0.1.0")]
+
 //! A movie playlist file (MPLS) parser.
 //!
 //! The entry point into this crate is the [`Mpls`] struct. You can obtain an
@@ -16,33 +18,27 @@
 //!
 //! See also [`Angle`] and [`Clip`].
 //!
-//! [`Mpls`]: types/struct.Mpls.html 
+//! [`Mpls`]: types/struct.Mpls.html
 //! [`parse`]: types/struct.Mpls.html#method.parse
 //! [`Angle`]: types/struct.Angle.html
 //! [`Clip`]: types/struct.Clip.html
 //! [lw/BluRay]: https://github.com/lw/BluRay/wiki/MPLS
 //! [bdinfo/mpls]: https://en.wikibooks.org/wiki/User:Bdinfo/mpls
-//! 
+//!
 //! # Examples
 //! ```no_run
 //! # fn main() -> std::io::Result<()> {
 //! use std::fs::File;
-//! use std::io::Read;
 //! use mpls::Mpls;
 //!
-//! // read the MPLS file into memory
-//! let bytes = {
-//!     let mut f = File::open("00800.mpls")?;
-//!     let mut buffer = Vec::new();
-//!     f.read_to_end(&mut buffer)?;
-//!     buffer
-//! };
+//! // open the playlist file
+//! let mut file = File::open("00800.mpls")?;
 //!
 //! // parse the play list
-//! let mpls = Mpls::parse(&bytes).expect("failed to parse MPLS file.");
+//! let mpls = Mpls::from(&file).expect("failed to parse MPLS file.");
 //!
 //! // extract the play list's angles
-//! let angles = mpls.angles(); 
+//! let angles = mpls.angles();
 //!
 //! // extract the segments
 //! for angle in angles {
@@ -56,7 +52,9 @@
 //! # Ok(())
 //! # }
 //! ```
+pub mod error;
 mod parser;
 pub mod types;
 
+pub use error::MplsError;
 pub use types::*;

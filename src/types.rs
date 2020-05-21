@@ -1,21 +1,14 @@
-use std::{fmt::{Display, Debug}, ops::Deref};
-use super::parser::parse_mpls;
-
-/// The parser error of the [`Mpls::parse`] method.
-/// 
-/// [`Mpls::parse`]: struct.Mpls.html#method.parse
-#[derive(Debug)]
-pub enum MplsParseError {
-    /// Unexpectedly encountered the end of the byte stream.
-    UnexpectedEof,
-    /// Failed to parse as an MPLS.
-    Invalid,
-}
+use crate::parser::parse_mpls;
+use crate::MplsError;
+use std::{
+    fmt::{Debug, Display},
+    io::Read,
+};
 
 /// The movie playlist.
 ///
 /// See the [crate-level docs] for high-level documentation about how to use this type.
-/// 
+///
 /// [crate-level docs]: ../index.html
 #[derive(Debug)]
 pub struct Mpls {
@@ -33,7 +26,7 @@ pub struct Mpls {
 ///
 /// You can use the [`segments`] method to retrieve the playlist segments
 /// associated with this angle.
-/// 
+///
 /// [`segments`]: #method.segments
 #[derive(Copy, Clone, Debug)]
 pub struct Angle<'mpls> {
@@ -49,7 +42,7 @@ impl<'a> Display for Angle<'_> {
 }
 
 impl Mpls {
-    /// Parses the given `bytes` and returns an `Mpls` struct.
+    /// Attempts to parse a movie playlist from the given reader.
     ///
     /// # Examples
     /// ```no_run
@@ -58,22 +51,21 @@ impl Mpls {
     /// use std::io::Read;
     /// use mpls::Mpls;
     ///
-    /// let bytes = {
-    ///     let mut f = File::open("00800.mpls")?;
-    ///     let mut buffer = Vec::new();
-    ///     f.read_to_end(&mut buffer)?;
-    ///     buffer
-    /// };
-    /// let mpls = Mpls::parse(&bytes).unwrap();
+    /// let mut file = File::open("00800.mpls")?;
+    /// let mpls = Mpls::from(&file).expect("failed to parse MPLS file.");
     /// # Ok(())
     /// # }
     /// ```
-    pub fn parse(bytes: &[u8]) -> Result<Mpls, MplsParseError> {
-        let (_, mpls) = parse_mpls(bytes).map_err(|e| match e {
-            nom::Err::Incomplete(_) => MplsParseError::UnexpectedEof,
-            _ => MplsParseError::Invalid,
-        })?;
-        Ok(mpls)
+    pub fn from<R: Read>(mut reader: R) -> Result<Mpls, MplsError> {
+        let bytes = {
+            let mut buffer = Vec::new();
+            reader.read_to_end(&mut buffer)?;
+            buffer
+        };
+
+        parse_mpls(&bytes)
+            .map_err(|_| MplsError::ParseError)
+            .map(|(_, m)| m)
     }
 
     /// Gets all of the movie's angles.
@@ -86,11 +78,11 @@ impl Mpls {
     /// A playlist with four angles in total (one of them being the main feature):
     /// ```
     /// use mpls::Mpls;
-    /// 
-    /// // let mpls = Mpls::parse(...)?;
+    ///
+    /// // let mpls = Mpls::from(...)?;
     /// # let mpls = {
     /// #     let bytes = include_bytes!("../assets/multi-angle.mpls");
-    /// #     let mpls = Mpls::parse(&bytes[..]).unwrap();
+    /// #     let mpls = Mpls::from(&bytes[..]).expect("failed to parse MPLS file.");
     /// #     mpls
     /// # };
     /// let angles = mpls.angles();
@@ -100,11 +92,11 @@ impl Mpls {
     /// A playlist that has no additional angles, only the main feature:
     /// ```
     /// use mpls::Mpls;
-    /// 
-    /// // let mpls = Mpls::parse(...)?;
+    ///
+    /// // let mpls = Mpls::from(...)?;
     /// # let mpls = {
     /// #     let bytes = include_bytes!("../assets/simple.mpls");
-    /// #     let mpls = Mpls::parse(&bytes[..]).unwrap();
+    /// #     let mpls = Mpls::from(&bytes[..]).expect("failed to parse MPLS file.");
     /// #     mpls
     /// # };
     /// # let angles = mpls.angles();
@@ -130,15 +122,15 @@ impl Mpls {
 
 impl Angle<'_> {
     /// Gets all segments for this angle.
-    /// 
+    ///
     /// # Examples
     /// Get all clip file names (without their extension) for an angle:
     /// ```
     /// use mpls::Mpls;
-    /// 
+    ///
     /// # let mpls = {
     /// #     let bytes = include_bytes!("../assets/simple.mpls");
-    /// #     let mpls = Mpls::parse(&bytes[..]).unwrap();
+    /// #     let mpls = Mpls::from(&bytes[..]).unwrap();
     /// #     mpls
     /// # };
     /// # let angle = mpls.angles()[0];
@@ -147,25 +139,25 @@ impl Angle<'_> {
     ///     .iter()
     ///     .map(|s| s.file_name.as_ref())
     ///     .collect();
-    /// 
+    ///
     /// assert_eq!(segments, &["00055", "00059", "00061"])
     /// ```
-    /// 
+    ///
     /// Multi-angle:
     /// ```
     /// use mpls::Mpls;
-    /// 
-    /// // let mpls = Mpls::parse(...)?;
+    ///
+    /// // let mpls = Mpls::from(...)?;
     /// # let mpls = {
     /// #     let bytes = include_bytes!("../assets/multi-angle.mpls");
-    /// #     let mpls = Mpls::parse(&bytes[..]).unwrap();
+    /// #     let mpls = Mpls::from(&bytes[..]).unwrap();
     /// #     mpls
     /// # };
     /// let angles = mpls.angles();
     /// let segments: (Vec<&str>, Vec<&str>) = (
     ///     angles[0].segments().iter().map(|s| s.file_name.as_ref()).collect(),
     ///     angles[1].segments().iter().map(|s| s.file_name.as_ref()).collect());
-    /// 
+    ///
     /// assert_eq!(&segments.0[..5], &["00081", "00082", "00086", "00087", "00091"]);
     /// assert_eq!(&segments.1[..5], &["00081", "00083", "00086", "00088", "00091"]);
     /// ```
@@ -199,7 +191,7 @@ impl PlayItem {
                 let idx = i.saturating_sub(1) as usize;
                 match (&self.angles).get(idx) {
                     Some(c) => c,
-                    None => &self.clip
+                    None => &self.clip,
                 }
             }
         }
@@ -297,7 +289,7 @@ pub struct StreamNumberTable {
 }
 
 /// A media stream within a [`Clip`].
-/// 
+///
 /// [`Clip`]: struct.Clip.html
 #[derive(Debug)]
 pub struct Stream {
@@ -440,9 +432,9 @@ impl FrameRateFraction {
 }
 
 /// A time stamp, relative to some System Time Clock sequence, expressed in 45 KHz.
-/// 
+///
 /// To get a floating-point value in seconds, you can use the [`seconds`] method.
-/// 
+///
 /// [`seconds`]: #method.seconds
 #[derive(Copy, Clone)]
 pub struct TimeStamp(pub u32);
@@ -451,14 +443,6 @@ impl TimeStamp {
     /// Returns this time stamp in units of seconds.
     pub fn seconds(&self) -> f64 {
         (self.0 as f64) / 45_000f64
-    }
-}
-
-impl Deref for TimeStamp {
-    type Target = u32;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }
 
