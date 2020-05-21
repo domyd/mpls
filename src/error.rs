@@ -2,7 +2,7 @@ use std::{error::Error, fmt::Display};
 
 /// The error type of the [`Mpls::from`] method.
 ///
-/// [`Mpls::from`]: ../types/struct.Mpls.html#method.parse
+/// [`Mpls::from`]: ../types/struct.Mpls.html#method.from
 #[derive(Debug)]
 pub enum MplsError {
     /// An I/O error occurred during parsing.
