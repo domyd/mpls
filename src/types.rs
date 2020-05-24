@@ -10,7 +10,7 @@ use std::{
 /// See the [crate-level docs] for high-level documentation about how to use this type.
 ///
 /// [crate-level docs]: ../index.html
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Mpls {
     pub app_info_play_list: AppInfoPlayList,
     pub play_list: PlayList,
@@ -172,7 +172,7 @@ impl Angle<'_> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PlayItem {
     pub clip: Clip,
     pub in_time: TimeStamp,
@@ -198,7 +198,7 @@ impl PlayItem {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SubPlayItem {
     pub clip: Clip,
     pub in_time: TimeStamp,
@@ -208,21 +208,21 @@ pub struct SubPlayItem {
     pub multi_clip_entries: Vec<Clip>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExtensionDataEntry {
     pub data_type: u16,
     pub data_version: u16,
     pub data: Vec<u8>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SubPath {
     pub sub_path_type: u8,
     pub is_repeat: bool,
     pub play_items: Vec<SubPlayItem>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct AngleInfo {
     pub is_different_audios: bool,
     pub is_seamless_angle_change: bool,
@@ -233,19 +233,19 @@ pub struct AngleInfo {
 /// This identifies the playable stream file. `file_name` consists of 5 numbers
 /// (e.g. "00055"), and `codec_id` of 4 letters which will usually be "M2TS" on
 /// blu-rays.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Clip {
     pub file_name: String,
     pub codec_id: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PlayList {
     pub play_items: Vec<PlayItem>,
     pub sub_paths: Vec<SubPath>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct PlayListMark {
     pub mark_type: MarkType,
     pub play_item: PlayItemRef,
@@ -253,14 +253,14 @@ pub struct PlayListMark {
     pub duration: Option<TimeStamp>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum MarkType {
     EntryPoint,
     LinkPoint,
     Unknown,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum PlaybackType {
     Standard,
     Random,
@@ -268,7 +268,7 @@ pub enum PlaybackType {
     Unknown,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct AppInfoPlayList {
     pub playback_type: PlaybackType,
     pub playback_count: Option<u16>,
@@ -276,7 +276,7 @@ pub struct AppInfoPlayList {
     pub flags: u16,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StreamNumberTable {
     pub primary_video_streams: Vec<Stream>,
     pub primary_audio_streams: Vec<Stream>,
@@ -291,38 +291,38 @@ pub struct StreamNumberTable {
 /// A media stream within a [`Clip`].
 ///
 /// [`Clip`]: struct.Clip.html
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Stream {
     pub entry: StreamEntry,
     pub attrs: StreamAttributes,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct StreamEntry {
     pub stream_type: u8,
     pub refs: StreamEntryRef,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum StreamEntryRef {
     PlayItem(Ref),
     SubPathKind1(Ref, Ref, Ref),
     SubPathKind2(Ref, Ref),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct SubPathRef(pub u8);
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct SubClipRef(pub u8);
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct PlayItemRef(pub u16);
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct StreamRef(pub u16);
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum Ref {
     SubPath(SubPathRef),
     SubClip(SubClipRef),
@@ -330,19 +330,19 @@ pub enum Ref {
     Stream(StreamRef),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum SubPathStream {
     Type2(u8, u8, u16),
     Type3(),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StreamAttributes {
     pub coding_type: u8,
     pub stream_type: StreamType,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum StreamType {
     SdrVideo(VideoFormat, FrameRate),
     HdrVideo(VideoFormat, FrameRate, DynamicRange, ColorSpace),
@@ -354,7 +354,7 @@ pub enum StreamType {
 
 pub type LanguageCode = String;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum CharacterCode {
     Utf8,
     Utf16BE,
@@ -366,7 +366,7 @@ pub enum CharacterCode {
     Unknown,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum AudioFormat {
     Mono,
     Stereo,
@@ -375,14 +375,14 @@ pub enum AudioFormat {
     Unknown,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum SampleRate {
     One(u32),
     Two(u32, u32),
     Unknown,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum VideoFormat {
     Interlaced480,
     Interlaced576,
@@ -395,7 +395,7 @@ pub enum VideoFormat {
     Unknown,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum DynamicRange {
     Sdr,
     Hdr10,
@@ -403,7 +403,7 @@ pub enum DynamicRange {
     Unknown,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum ColorSpace {
     BT709,
     BT2020,
@@ -413,7 +413,7 @@ pub enum ColorSpace {
 pub type FrameRate = Option<FrameRateFraction>;
 
 /// A video frame rate, represented as a fraction.
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct FrameRateFraction {
     pub numerator: i32,
     pub denominator: i32,
