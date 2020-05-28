@@ -43,9 +43,9 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mpls = "0.1.0"
+mpls = "0.2.0"
 ```
 
 ## Documentation
 
-See the [reference docs](https://docs.rs/mpls/0.1.0) on crates.io.
+See the [reference docs](https://docs.rs/mpls/0.2.0) on crates.io.
